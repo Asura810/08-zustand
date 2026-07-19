@@ -27,8 +27,14 @@ export default function NoteForm() {
     },
   });
 
-  async function formAction() {
-    mutation.mutate(draft);
+  async function formAction(formData: FormData) {
+    const newNote = {
+      title: String(formData.get('title')),
+      content: String(formData.get('content')),
+      tag: String(formData.get('tag')),
+    };
+
+    mutation.mutate(newNote);
   }
 
   return (
@@ -40,7 +46,7 @@ export default function NoteForm() {
           id="title"
           name="title"
           className={css.input}
-          defaultValue={draft.title}
+          value={draft.title}
           onChange={e =>
             setDraft({
               ...draft,
@@ -58,7 +64,7 @@ export default function NoteForm() {
           name="content"
           rows={8}
           className={css.textarea}
-          defaultValue={draft.content}
+          value={draft.content}
           onChange={e =>
             setDraft({
               ...draft,
@@ -75,7 +81,7 @@ export default function NoteForm() {
           id="tag"
           name="tag"
           className={css.select}
-          defaultValue={draft.tag}
+          value={draft.tag}
           onChange={e =>
             setDraft({
               ...draft,
@@ -84,13 +90,9 @@ export default function NoteForm() {
           }
         >
           <option value="Todo">Todo</option>
-
           <option value="Work">Work</option>
-
           <option value="Personal">Personal</option>
-
           <option value="Meeting">Meeting</option>
-
           <option value="Shopping">Shopping</option>
         </select>
       </div>

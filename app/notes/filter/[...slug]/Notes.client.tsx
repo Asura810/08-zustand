@@ -27,6 +27,7 @@ export default function NotesClient({ tag }: { tag?: string }) {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['notes', page, debouncedSearch, tag],
+
     queryFn: () =>
       fetchNotes({
         page,
@@ -34,14 +35,20 @@ export default function NotesClient({ tag }: { tag?: string }) {
         perPage: 9,
         tag,
       }),
-    placeholderData: prev => prev,
+
+    placeholderData: previousData => previousData,
   });
 
   const notes = data?.notes ?? [];
   const totalPages = data?.totalPages ?? 1;
 
-  if (isLoading) return <p>Loading...</p>;
-  if (isError) return <p>Error loading notes</p>;
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
+
+  if (isError) {
+    return <p>Error loading notes</p>;
+  }
 
   return (
     <div className={css.wrapper}>
@@ -51,9 +58,9 @@ export default function NotesClient({ tag }: { tag?: string }) {
         Create note
       </Link>
 
-      <NoteList notes={notes} />
+      {notes.length > 0 && <NoteList notes={notes} />}
 
-      {totalPages > 1 && <Pagination page={page} pageCount={totalPages} setPage={setPage} />}
+      <Pagination page={page} pageCount={totalPages} setPage={setPage} />
     </div>
   );
 }
