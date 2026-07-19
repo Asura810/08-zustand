@@ -6,8 +6,7 @@ import { fetchNotes } from '@/lib/api';
 
 import NoteList from '@/components/NoteList/NoteList';
 import SearchBox from '@/components/SearchBox/SearchBox';
-import Modal from '@/components/Modal/Modal';
-import NoteForm from '@/components/NoteForm/NoteForm';
+import Link from 'next/link';
 import Pagination from '@/components/Pagination/Pagination';
 
 import css from './NotesPage.module.css';
@@ -16,9 +15,7 @@ export default function NotesClient({ tag }: { tag?: string }) {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -28,7 +25,6 @@ export default function NotesClient({ tag }: { tag?: string }) {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // fetch notes
   const { data, isLoading, isError } = useQuery({
     queryKey: ['notes', page, debouncedSearch, tag],
     queryFn: () =>
@@ -51,17 +47,13 @@ export default function NotesClient({ tag }: { tag?: string }) {
     <div className={css.wrapper}>
       <SearchBox onChange={setSearch} />
 
-      <button onClick={() => setIsModalOpen(true)}>Create note</button>
+      <Link href="/notes/action/create" className={css.createButton}>
+        Create note
+      </Link>
 
       <NoteList notes={notes} />
 
       {totalPages > 1 && <Pagination page={page} pageCount={totalPages} setPage={setPage} />}
-
-      {isModalOpen && (
-        <Modal onClose={() => setIsModalOpen(false)}>
-          <NoteForm onClose={() => setIsModalOpen(false)} />
-        </Modal>
-      )}
     </div>
   );
 }

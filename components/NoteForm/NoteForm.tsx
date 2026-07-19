@@ -1,83 +1,109 @@
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-import css from './NoteForm.module.css';
+'use client';
 
+import css from './NoteForm.module.css';
+import { useRouter } from 'next/navigation';
+import { useNoteStore } from '@/lib/store/noteStore';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createNote } from '@/lib/api';
 
-interface NoteFormProps {
-  onClose: () => void;
-}
+export default function NoteForm() {
+  const router = useRouter();
 
-const validationSchema = Yup.object({
-  title: Yup.string().min(3, 'Min 3 characters').max(50, 'Max 50 characters').required('Required'),
+  const { draft, setDraft, clearDraft } = useNoteStore();
 
-  content: Yup.string().max(500, 'Max 500 characters'),
-
-  tag: Yup.string().oneOf(['Todo', 'Work', 'Personal', 'Meeting', 'Shopping']).required('Required'),
-});
-
-export default function NoteForm({ onClose }: NoteFormProps) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: createNote,
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
-      onClose();
+      queryClient.invalidateQueries({
+        queryKey: ['notes'],
+      });
+
+      clearDraft();
+
+      router.push('/notes/filter/all');
     },
   });
 
+  async function formAction() {
+    mutation.mutate(draft);
+  }
+
   return (
-    <Formik
-      initialValues={{
-        title: '',
-        content: '',
-        tag: 'Todo',
-      }}
-      validationSchema={validationSchema}
-      onSubmit={(values, actions) => {
-        mutation.mutate(values);
-        actions.resetForm();
-      }}
-    >
-      {({ isSubmitting }) => (
-        <Form className={css.form}>
-          <div className={css.formGroup}>
-            <label htmlFor="title">Title</label>
-            <Field id="title" name="title" className={css.input} />
-            <ErrorMessage name="title" component="span" className={css.error} />
-          </div>
+    <form action={formAction} className={css.form}>
+      <div className={css.formGroup}>
+        <label htmlFor="title">Title</label>
 
-          <div className={css.formGroup}>
-            <label htmlFor="content">Content</label>
-            <Field as="textarea" id="content" name="content" rows={8} className={css.textarea} />
-            <ErrorMessage name="content" component="span" className={css.error} />
-          </div>
+        <input
+          id="title"
+          name="title"
+          className={css.input}
+          defaultValue={draft.title}
+          onChange={e =>
+            setDraft({
+              ...draft,
+              title: e.target.value,
+            })
+          }
+        />
+      </div>
 
-          <div className={css.formGroup}>
-            <label htmlFor="tag">Tag</label>
-            <Field as="select" id="tag" name="tag" className={css.select}>
-              <option value="Todo">Todo</option>
-              <option value="Work">Work</option>
-              <option value="Personal">Personal</option>
-              <option value="Meeting">Meeting</option>
-              <option value="Shopping">Shopping</option>
-            </Field>
-            <ErrorMessage name="tag" component="span" className={css.error} />
-          </div>
+      <div className={css.formGroup}>
+        <label htmlFor="content">Content</label>
 
-          <div className={css.actions}>
-            <button type="button" className={css.cancelButton} onClick={onClose}>
-              Cancel
-            </button>
+        <textarea
+          id="content"
+          name="content"
+          rows={8}
+          className={css.textarea}
+          defaultValue={draft.content}
+          onChange={e =>
+            setDraft({
+              ...draft,
+              content: e.target.value,
+            })
+          }
+        />
+      </div>
 
-            <button type="submit" className={css.submitButton} disabled={isSubmitting}>
-              Create note
-            </button>
-          </div>
-        </Form>
-      )}
-    </Formik>
+      <div className={css.formGroup}>
+        <label htmlFor="tag">Tag</label>
+
+        <select
+          id="tag"
+          name="tag"
+          className={css.select}
+          defaultValue={draft.tag}
+          onChange={e =>
+            setDraft({
+              ...draft,
+              tag: e.target.value,
+            })
+          }
+        >
+          <option value="Todo">Todo</option>
+
+          <option value="Work">Work</option>
+
+          <option value="Personal">Personal</option>
+
+          <option value="Meeting">Meeting</option>
+
+          <option value="Shopping">Shopping</option>
+        </select>
+      </div>
+
+      <div className={css.actions}>
+        <button type="button" className={css.cancelButton} onClick={() => router.back()}>
+          Cancel
+        </button>
+
+        <button type="submit" className={css.submitButton} disabled={mutation.isPending}>
+          Create note
+        </button>
+      </div>
+    </form>
   );
 }
